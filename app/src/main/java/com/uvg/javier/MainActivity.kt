@@ -10,6 +10,8 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.ui.Modifier
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.rememberNavController
+import com.uvg.javier.BottomBar.BarDestination
+import com.uvg.javier.BottomBar.BarScreen
 import com.uvg.javier.Screen1.LoginDestination
 import com.uvg.javier.ui.theme.MyApplicationTheme
 import com.uvg.javier.Screen1.loginScreen
@@ -36,7 +38,7 @@ class MainActivity : ComponentActivity() {
                         loginScreen(
                             onLoginClick = {
 
-                                navController.navigate(CharacterDestination) {
+                                navController.navigate(BarDestination) {
                                     popUpTo(LoginDestination) {
                                         inclusive = true
                                     }
@@ -45,24 +47,15 @@ class MainActivity : ComponentActivity() {
                         )
 
 
-                        characterScreen(
-                            onCharacterClick = { character ->
-                                navController.navigateToCharacterDetailScreen(
-                                    destination = CharacterDetailDestination(
-                                        characterId = character
-                                    )
-                                )
-                            },
+                        BarScreen(
+                            onProfileClick = {navController.navigate(LoginDestination) {popUpTo(0)} },
+
                             onBackToLogin = {
                                 finish()
                             }
                         )
 
-                        characterDetailScreen(
-                            onNavigateBack = {
-                                navController.navigateUp()
-                            }
-                        )
+
                     }
                 }
             }
