@@ -21,7 +21,12 @@ import com.uvg.javier.dataCharacters.Character
 import com.uvg.javier.dataCharacters.CharacterDb
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.uvg.javier.Loading.ErrorScreen
+import com.uvg.javier.Loading.LoadingScreen
+import com.uvg.javier.ViewModels.LocationListViewModel
 import com.uvg.javier.dataLocations.Location
 import com.uvg.javier.dataLocations.LocationDb
 
@@ -29,24 +34,34 @@ import com.uvg.javier.dataLocations.LocationDb
 @Composable
 fun LocationsRoute(
     onLocationClick: (Int) -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    viewModel: LocationListViewModel = viewModel()
 ){
-    val locationState by remember { mutableStateOf(LocationDb().getAllLocations()) }
+    val state by viewModel.state.collectAsState()
 
-    LocationsListScreen(onLocationClick = onLocationClick, location = locationState, modifier = modifier)
+    when {
+        state.isLoading -> LoadingScreen(onClick = { viewModel.setError() })
+        state.hasError -> ErrorScreen(onRetry = { viewModel.retry() })
+        else -> LocationsListScreen(
+            locations = state.data ?: emptyList(),
+            onLocationClick = onLocationClick,
+            modifier = Modifier.fillMaxSize()
+        )
+    }
 }
+
+
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun LocationsListScreen(
     modifier: Modifier = Modifier,
-    location: List<Location>,
+    locations: List<Location>,
     onLocationClick: (Int) -> Unit) {
     Scaffold(
 
     ) { paddingValues ->
-        val locationDb = remember { LocationDb() }
-        val locations = locationDb.getAllLocations()
+
 
         LazyColumn(contentPadding = paddingValues) {
             items(locations.size) { location ->

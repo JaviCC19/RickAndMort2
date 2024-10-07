@@ -20,34 +20,49 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
-import com.uvg.javier.dataCharacters.CharacterDb
+import com.uvg.javier.Factorys.CharacterProfileViewModelFactory
+import com.uvg.javier.Loading.ErrorScreen
+import com.uvg.javier.Loading.LoadingScreen
+import com.uvg.javier.ViewModels.CharacterProfileViewModel
+import com.uvg.javier.dataCharacters.Character
 
 
 @Composable
 fun CharacterProfileRoute(
-    characterId: Int,
-    onNavigateBack: () -> Unit
+    characterId : Int,
+    onNavigateBack: () -> Unit,
+    viewModel: CharacterProfileViewModel = viewModel(factory = CharacterProfileViewModelFactory(characterId))
 ) {
-    CharacterDetailScreen(
-        characterId = characterId,
-        onBackClick = onNavigateBack
-    )
-}
+    val state by viewModel.state.collectAsState()
 
+    when {
+        state.isLoading -> LoadingScreen(onClick = { viewModel.setError() })
+        state.hasError -> ErrorScreen(onRetry = { viewModel.retry() })
+        else -> CharacterDetailScreen(
+            characterId = state.data!!,
+            onBackClick = onNavigateBack,
+
+        )
+    }
+}
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CharacterDetailScreen(
-    characterId: Int,
-    onBackClick: () -> Unit
+    characterId: Character,
+    onBackClick: () -> Unit,
+
 ) {
-    val character = CharacterDb().getCharacterById(characterId)
+
 
     Scaffold(
         topBar = {
@@ -74,7 +89,7 @@ fun CharacterDetailScreen(
         ) {
             AsyncImage(
                 model = ImageRequest.Builder(LocalContext.current)
-                    .data(character.image)
+                    .data(characterId.image)
                     .crossfade(true)
                     .build(),
                 contentDescription = null,
@@ -85,13 +100,13 @@ fun CharacterDetailScreen(
                     .padding(8.dp)
             )
             Spacer(modifier = Modifier.height(16.dp))
-            Text(text = "Name: ${character.name}", style = MaterialTheme.typography.headlineMedium)
+            Text(text = "Name: ${characterId.name}", style = MaterialTheme.typography.headlineMedium)
             Spacer(modifier = Modifier.height(8.dp))
-            Text(text = "Species: ${character.species}", style = MaterialTheme.typography.bodyLarge)
+            Text(text = "Species: ${characterId.species}", style = MaterialTheme.typography.bodyLarge)
             Spacer(modifier = Modifier.height(8.dp))
-            Text(text = "Status: ${character.status}", style = MaterialTheme.typography.bodyLarge)
+            Text(text = "Status: ${characterId.status}", style = MaterialTheme.typography.bodyLarge)
             Spacer(modifier = Modifier.height(8.dp))
-            Text(text = "Gender: ${character.gender}", style = MaterialTheme.typography.bodyLarge)
+            Text(text = "Gender: ${characterId.gender}", style = MaterialTheme.typography.bodyLarge)
         }
     }
 }

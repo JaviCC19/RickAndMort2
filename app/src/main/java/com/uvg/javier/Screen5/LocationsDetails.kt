@@ -21,35 +21,50 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
+import com.uvg.javier.Factorys.LocationFactory
+import com.uvg.javier.Loading.ErrorScreen
+import com.uvg.javier.Loading.LoadingScreen
+import com.uvg.javier.ViewModels.LocationDetailViewModel
 import com.uvg.javier.dataCharacters.CharacterDb
+import com.uvg.javier.dataLocations.Location
 import com.uvg.javier.dataLocations.LocationDb
 
 
 @Composable
 fun LocationsDetailsRoute(
     LocationId: Int,
-    onNavigateBack: () -> Unit
+    onNavigateBack: () -> Unit,
+    viewModel: LocationDetailViewModel = viewModel(factory = LocationFactory(LocationId))
 ) {
-    LocationDetailScreen(
-       LocationId = LocationId,
-        onBackClick = onNavigateBack
-    )
+    val state by viewModel.state.collectAsState()
+
+    when {
+        state.isLoading -> LoadingScreen(onClick = { viewModel.setError() })
+        state.hasError -> ErrorScreen(onRetry = { viewModel.retry() })
+        else -> LocationDetailScreen(
+            location = state.data!!,
+            onBackClick = onNavigateBack,
+
+        )
+    }
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun LocationDetailScreen(
-    LocationId: Int,
+    location: Location,
     onBackClick: () -> Unit
 ) {
-    val location = LocationDb().getLocationById(LocationId)
 
     Scaffold(
         topBar = {

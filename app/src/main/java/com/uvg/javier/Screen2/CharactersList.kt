@@ -20,23 +20,37 @@ import com.uvg.javier.dataCharacters.Character
 import com.uvg.javier.dataCharacters.CharacterDb
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.runtime.collectAsState
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.uvg.javier.Loading.ErrorScreen
+import com.uvg.javier.Loading.LoadingScreen
+import com.uvg.javier.ViewModels.CharacterListViewModel
 
 
 @Composable
 fun CharacterRoute(
     onCharacterClick: (Int) -> Unit,
-    modifier: Modifier = Modifier
-){
-    val charactersState by remember { mutableStateOf(CharacterDb().getAllCharacters()) }
+    modifier: Modifier = Modifier.fillMaxWidth(),
+    viewModel: CharacterListViewModel = viewModel()
+) {
+    val state by viewModel.state.collectAsState()
 
-    CharacterListScreen(onCharacterClick = onCharacterClick, characters = charactersState, modifier = modifier)
+    when {
+        state.isLoading -> LoadingScreen(onClick = { viewModel.setError() })
+        state.hasError -> ErrorScreen(onRetry = { viewModel.retry() })
+        else -> CharacterListScreen(
+            characters = state.data ?: emptyList(),
+            onCharacterClick = onCharacterClick,
+
+        )
+    }
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CharacterListScreen(
-    modifier: Modifier = Modifier,
     characters: List<Character>,
+
     onCharacterClick: (Int) -> Unit) {
     Scaffold(
         topBar = {
@@ -48,9 +62,6 @@ fun CharacterListScreen(
             )
         }
     ) { paddingValues ->
-        val characterDb = remember { CharacterDb() }
-        val characters = characterDb.getAllCharacters()
-
         LazyColumn(contentPadding = paddingValues) {
             items(characters.size) { character ->
                 CharacterListItem(character = characters[character], onClick = onCharacterClick)
@@ -58,6 +69,9 @@ fun CharacterListScreen(
             }
         }
     }
+
+
+
 
 
 @Composable
@@ -86,3 +100,5 @@ fun CharacterListItem(character: Character, onClick: (Int) -> Unit) {
         }
     }
 }
+
+
